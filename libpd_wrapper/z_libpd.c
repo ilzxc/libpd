@@ -54,9 +54,12 @@ static void *get_object(const char *s) {
 
 /* this is called instead of sys_main() to start things */
 t_pdinstance* libpd_init(void) {
-  static int initialized = 0;
-  if (initialized) return -1; // only allow init once (for now)
-  initialized = 1;
+//  static int initialized = 0;
+//  if (initialized) return -1; // only allow init once (for now)
+//  initialized = 1;
+  t_pdinstance* pd = pdinstance_new();
+  pd_this = pd;
+  
   signal(SIGFPE, SIG_IGN);
   libpd_start_message(32); // allocate array for message assembly
   sys_printhook = (t_printhook) libpd_printhook;
@@ -78,10 +81,6 @@ t_pdinstance* libpd_init(void) {
 #ifdef HAVE_SCHED_TICK_ARG
   sys_time = 0;
 #endif
-  /// ILYA--/ 
-  //pd_init();
-  t_pdinstance* pd = pdinstance_new();
-  pd_this = pd;
   pd_init();
   /// ---------------------EOI
   libpdreceive_setup();
