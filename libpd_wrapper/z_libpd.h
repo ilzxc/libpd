@@ -18,47 +18,47 @@ extern "C"
 
 #include "m_pd.h"
 
-EXTERN int libpd_init(void);
-EXTERN void libpd_clear_search_path(void);
-EXTERN void libpd_add_to_search_path(const char *sym);
+EXTERN t_pdinstance *libpd_init(void);
+EXTERN void libpd_clear_search_path(t_pdinstance *pd);
+EXTERN void libpd_add_to_search_path(t_pdinstance *pd, const char *sym);
 
-EXTERN void *libpd_openfile(const char *basename, const char *dirname);
-EXTERN void libpd_closefile(void *p);
-EXTERN int libpd_getdollarzero(void *p);
+EXTERN void *libpd_openfile(t_pdinstance *pd, const char *basename, const char *dirname);
+EXTERN void libpd_closefile(t_pdinstance *pd, void *p);
+EXTERN int libpd_getdollarzero(t_pdinstance *pd, void *p);
 
-EXTERN int libpd_blocksize(void);
-EXTERN int libpd_init_audio(int inChans, int outChans, int sampleRate);
-EXTERN int libpd_process_raw(const float *inBuffer, float *outBuffer);
-EXTERN int libpd_process_short(const int ticks,
+EXTERN int libpd_blocksize(t_pdinstance *pd);
+EXTERN int libpd_init_audio(t_pdinstance *pd, int inChans, int outChans, int sampleRate);
+EXTERN int libpd_process_raw(t_pdinstance *pd, const float *inBuffer, float *outBuffer);
+EXTERN int libpd_process_short(t_pdinstance *pd, const int ticks,
     const short *inBuffer, short *outBuffer);
-EXTERN int libpd_process_float(int ticks,
+EXTERN int libpd_process_float(t_pdinstance *pd, int ticks,
     const float *inBuffer, float *outBuffer);
-EXTERN int libpd_process_double(int ticks,
+EXTERN int libpd_process_double(t_pdinstance *pd, int ticks,
     const double *inBuffer, double *outBuffer);
 
-EXTERN int libpd_arraysize(const char *name);
+EXTERN int libpd_arraysize(t_pdinstance *pd, const char *name);
 // The parameters of the next two functions are inspired by memcpy.
-EXTERN int libpd_read_array(float *dest, const char *src, int offset, int n);
-EXTERN int libpd_write_array(const char *dest, int offset, float *src, int n);
+EXTERN int libpd_read_array(t_pdinstance *pd, float *dest, const char *src, int offset, int n);
+EXTERN int libpd_write_array(t_pdinstance *pd, const char *dest, int offset, float *src, int n);
 
-EXTERN int libpd_bang(const char *recv);
-EXTERN int libpd_float(const char *recv, float x);
-EXTERN int libpd_symbol(const char *recv, const char *sym);
+EXTERN int libpd_bang(t_pdinstance *pd, const char *recv);
+EXTERN int libpd_float(t_pdinstance *pd, const char *recv, float x);
+EXTERN int libpd_symbol(t_pdinstance *pd, const char *recv, const char *sym);
 
-EXTERN void libpd_set_float(t_atom *v, float x);
-EXTERN void libpd_set_symbol(t_atom *v, const char *sym);
-EXTERN int libpd_list(const char *recv, int argc, t_atom *argv);
-EXTERN int libpd_message(const char *recv, const char *msg, int argc, t_atom *argv);
+EXTERN void libpd_set_float(t_pdinstance *pd, t_atom *v, float x);
+EXTERN void libpd_set_symbol(t_pdinstance *pd, t_atom *v, const char *sym);
+EXTERN int libpd_list(t_pdinstance *pd, const char *recv, int argc, t_atom *argv);
+EXTERN int libpd_message(t_pdinstance *pd, const char *recv, const char *msg, int argc, t_atom *argv);
 
 EXTERN int libpd_start_message(int max_length);
 EXTERN void libpd_add_float(float x);
 EXTERN void libpd_add_symbol(const char *sym);
-EXTERN int libpd_finish_list(const char *recv);
-EXTERN int libpd_finish_message(const char *recv, const char *msg);
+EXTERN int libpd_finish_list(t_pdinstance *pd, const char *recv);
+EXTERN int libpd_finish_message(t_pdinstance *pd, const char *recv, const char *msg);
 
-EXTERN int libpd_exists(const char *sym);
-EXTERN void *libpd_bind(const char *sym);
-EXTERN void libpd_unbind(void *p);
+EXTERN int libpd_exists(t_pdinstance *pd, const char *sym);
+EXTERN void *libpd_bind(t_pdinstance *pd, const char *sym);
+EXTERN void libpd_unbind(t_pdinstance *pd, void *p);
 
 EXTERN int libpd_is_float(t_atom *a);
 EXTERN int libpd_is_symbol(t_atom *a);

@@ -53,7 +53,7 @@ static void *get_object(const char *s) {
 }
 
 /* this is called instead of sys_main() to start things */
-int libpd_init(void) {
+t_pdinstance* libpd_init(void) {
   static int initialized = 0;
   if (initialized) return -1; // only allow init once (for now)
   initialized = 1;
@@ -78,7 +78,12 @@ int libpd_init(void) {
 #ifdef HAVE_SCHED_TICK_ARG
   sys_time = 0;
 #endif
+  /// ILYA--/ 
+  //pd_init();
+  t_pdinstance* pd = pdinstance_new();
+  pd_this = pd;
   pd_init();
+  /// ---------------------EOI
   libpdreceive_setup();
   sys_set_audio_api(API_DUMMY);
   sys_searchpath = NULL;
@@ -95,34 +100,41 @@ int libpd_init(void) {
   stdout_setup();
 #endif
 
-  return 0;
+  return pd;
 }
 
-void libpd_clear_search_path(void) {
+void libpd_clear_search_path(t_pdinstance *pd) {
+  pd_this = pd;
   namelist_free(sys_searchpath);
   sys_searchpath = NULL;
 }
 
-void libpd_add_to_search_path(const char *s) {
+void libpd_add_to_search_path(t_pdinstance *pd, const char *s) {
+  pd_this = pd;
   sys_searchpath = namelist_append(sys_searchpath, s, 0);
 }
 
-void *libpd_openfile(const char *basename, const char *dirname) {
+void *libpd_openfile(t_pdinstance *pd, const char *basename, const char *dirname) {
+  pd_this = pd;
   return (void *)glob_evalfile(NULL, gensym(basename), gensym(dirname));
 }
 
-void libpd_closefile(void *x) {
+void libpd_closefile(t_pdinstance *pd, void *x) {
+  pd_this = pd;
+  pd_this = pd;
   pd_free((t_pd *)x);
 }
 
-int libpd_getdollarzero(void *x) {
+int libpd_getdollarzero(t_pdinstance *pd, void *x) {
+  pd_this = pd;
   pd_pushsym((t_pd *)x);
   int dzero = canvas_getdollarzero();
   pd_popsym((t_pd *)x);
   return dzero;
 }
 
-int libpd_init_audio(int inChans, int outChans, int sampleRate) {
+int libpd_init_audio(t_pdinstance *pd, int inChans, int outChans, int sampleRate) {
+  pd_this = pd;
   int indev[MAXAUDIOINDEV], inch[MAXAUDIOINDEV],
        outdev[MAXAUDIOOUTDEV], outch[MAXAUDIOOUTDEV];
   indev[0] = outdev[0] = DEFAULTAUDIODEV;
@@ -135,7 +147,8 @@ int libpd_init_audio(int inChans, int outChans, int sampleRate) {
   return 0;
 }
 
-int libpd_process_raw(const float *inBuffer, float *outBuffer) {
+int libpd_process_raw(t_pdinstance *pd, const float *inBuffer, float *outBuffer) {
+  pd_this = pd;
   size_t n_in = sys_inchannels * DEFDACBLKSIZE;
   size_t n_out = sys_outchannels * DEFDACBLKSIZE;
   t_sample *p;
@@ -175,15 +188,18 @@ static const t_sample sample_to_short = SHRT_MAX,
   } \
   return 0;
 
-int libpd_process_short(int ticks, const short *inBuffer, short *outBuffer) {
+int libpd_process_short(t_pdinstance *pd, int ticks, const short *inBuffer, short *outBuffer) {
+  pd_this = pd;
   PROCESS(* short_to_sample, * sample_to_short)
 }
 
-int libpd_process_float(int ticks, const float *inBuffer, float *outBuffer) {
+int libpd_process_float(t_pdinstance *pd, int ticks, const float *inBuffer, float *outBuffer) {
+  pd_this = pd;
   PROCESS(,)
 }
 
-int libpd_process_double(int ticks, const double *inBuffer, double *outBuffer) {
+int libpd_process_double(t_pdinstance *pd, int ticks, const double *inBuffer, double *outBuffer) {
+  pd_this = pd;
   PROCESS(,)
 }
  
@@ -191,7 +207,8 @@ int libpd_process_double(int ticks, const double *inBuffer, double *outBuffer) {
   t_garray *garray = (t_garray *) pd_findbyclass(gensym(name), garray_class); \
   if (!garray) return -1; \
 
-int libpd_arraysize(const char *name) {
+int libpd_arraysize(t_pdinstance *pd, const char *name) {
+  pd_this = pd;
   GETARRAY
   return garray_npoints(garray);
 }
@@ -203,32 +220,38 @@ int libpd_arraysize(const char *name) {
   int i; \
   for (i = 0; i < n; i++) _x = _y;
 
-int libpd_read_array(float *dest, const char *name, int offset, int n) {
+int libpd_read_array(t_pdinstance *pd, float *dest, const char *name, int offset, int n) {
+  pd_this = pd;
   MEMCPY(*dest++, (vec++)->w_float)
   return 0;
 }
 
-int libpd_write_array(const char *name, int offset, float *src, int n) {
+int libpd_write_array(t_pdinstance *pd, const char *name, int offset, float *src, int n) {
+  pd_this = pd;
   MEMCPY((vec++)->w_float, *src++)
   return 0;
 }
 
-void libpd_set_float(t_atom *v, float x) {
+void libpd_set_float(t_pdinstance *pd, t_atom *v, float x) {
+  pd_this = pd;
   SETFLOAT(v, x);
 }
 
-void libpd_set_symbol(t_atom *v, const char *sym) {
+void libpd_set_symbol(t_pdinstance *pd, t_atom *v, const char *sym) {
+  pd_this = pd;
   SETSYMBOL(v, gensym(sym));
 }
 
-int libpd_list(const char *recv, int n, t_atom *v) {
+int libpd_list(t_pdinstance *pd, const char *recv, int n, t_atom *v) {
+  pd_this = pd;
   t_pd *dest = get_object(recv);
   if (dest == NULL) return -1;
   pd_list(dest, &s_list, n, v);
   return 0;
 }
 
-int libpd_message(const char *recv, const char *msg, int n, t_atom *v) {
+int libpd_message(t_pdinstance *pd, const char *recv, const char *msg, int n, t_atom *v) {
+  pd_this = pd;
   t_pd *dest = get_object(recv);
   if (dest == NULL) return -1;
   pd_typedmess(dest, gensym(msg), n, v);
@@ -261,19 +284,23 @@ void libpd_add_symbol(const char *s) {
   ADD_ARG(SETSYMBOL);
 }
 
-int libpd_finish_list(const char *recv) {
-  return libpd_list(recv, argc, argv);
+int libpd_finish_list(t_pdinstance *pd, const char *recv) {
+  pd_this = pd;
+  return libpd_list(pd, recv, argc, argv);
 }
 
-int libpd_finish_message(const char *recv, const char *msg) {
-  return libpd_message(recv, msg, argc, argv);
+int libpd_finish_message(t_pdinstance *pd, const char *recv, const char *msg) {
+  pd_this = pd;
+  return libpd_message(pd, recv, msg, argc, argv);
 }
 
-void *libpd_bind(const char *sym) {
+void *libpd_bind(t_pdinstance *pd, const char *sym) {
+  pd_this = pd;
   return libpdreceive_new(gensym(sym));
 }
 
-void libpd_unbind(void *p) {
+void libpd_unbind(t_pdinstance *pd, void *p) {
+  pd_this = pd;
   pd_free((t_pd *)p);
 }
 
@@ -321,32 +348,36 @@ void libpd_set_messagehook(const t_libpd_messagehook hook) {
   libpd_messagehook = hook;
 }
 
-int libpd_symbol(const char *recv, const char *sym) {
+int libpd_symbol(t_pdinstance *pd, const char *recv, const char *sym) {
+  pd_this = pd;
   void *obj = get_object(recv);
   if (obj == NULL) return -1;
   pd_symbol(obj, gensym(sym));
   return 0;
 }
 
-int libpd_float(const char *recv, float x) {
+int libpd_float(t_pdinstance *pd, const char *recv, float x) {
+  pd_this = pd;
   void *obj = get_object(recv);
   if (obj == NULL) return -1;
   pd_float(obj, x);
   return 0;
 }
 
-int libpd_bang(const char *recv) {
+int libpd_bang(t_pdinstance *pd, const char *recv) {
+  pd_this = pd;
   void *obj = get_object(recv);
   if (obj == NULL) return -1;
   pd_bang(obj);
   return 0;
 }
 
-int libpd_blocksize(void) {
+int libpd_blocksize(t_pdinstance *pd) {
+  pd_this = pd;
   return DEFDACBLKSIZE;
 }
 
-int libpd_exists(const char *sym) {
+int libpd_exists(t_pdinstance *pd, const char *sym) {
   return get_object(sym) != NULL;
 }
 
